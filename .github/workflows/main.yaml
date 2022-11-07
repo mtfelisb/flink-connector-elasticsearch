@@ -1,0 +1,42 @@
+name: CI
+
+on: [push]
+
+jobs:
+  clean:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3.6.0
+        with:
+          distribution: 'adopt'
+          java-version: 11
+      - name: Clean with Maven
+        run: mvn -B clean
+  compile:
+    needs: clean
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3.6.0
+        with:
+          distribution: 'adopt'
+          java-version: 11
+      - name: Compile with Maven
+        run: mvn -B compile
+  test:
+    needs: compile
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3.6.0
+        with:
+          distribution: 'adopt'
+          java-version: 11
+      - name: Test with Maven
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: mvn -B test
