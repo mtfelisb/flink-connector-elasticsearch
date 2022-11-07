@@ -1,2 +1,2 @@
 # flink-connector-elasticsearch
-An Apache Flink connector to Elasticsearch v8
+Apache Flink connector to Elasticsearch v8
