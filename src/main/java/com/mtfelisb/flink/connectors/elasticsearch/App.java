@@ -1,4 +1,4 @@
-package com.mtfelisb;
+package com.mtfelisb.flink.connectors.elasticsearch;
 
 public class App {
     public static void main(String[] args) {
