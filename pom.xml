@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.mtfelisb</groupId>
+    <artifactId>flink-connector-elasticsearch</artifactId>
+    <version>0.0.1</version>
+
+    <packaging>jar</packaging>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <name>Apache Flink Elasticsearch v8 sink</name>
+    <description>Java library that provides Apache Flink connector sink for Elasticsearch v8.</description>
+    <url>https://github.com/mtfelisb/flink-connector-elasticsearch</url>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub mtfelisb Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/mtfelisb/flink-connector-elasticsearch</url>
+        </repository>
+    </distributionManagement>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>11</java.version>
+    </properties>
+</project>
