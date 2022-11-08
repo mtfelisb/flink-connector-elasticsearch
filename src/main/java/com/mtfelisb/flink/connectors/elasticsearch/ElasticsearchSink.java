@@ -22,6 +22,7 @@
 
 package com.mtfelisb.flink.connectors.elasticsearch;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.state.FunctionInitializationContext;
 import org.apache.flink.runtime.state.FunctionSnapshotContext;
@@ -31,31 +32,40 @@ import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Sink<T> extends RichSinkFunction<T> implements CheckpointedFunction {
-    private final static Logger logger = LogManager.getLogger(Sink.class);
+public class ElasticsearchSink<T> extends RichSinkFunction<T> implements CheckpointedFunction {
+    private final static Logger LOG = LogManager.getLogger(ElasticsearchSink.class);
+
+    private ElasticsearchClient esClient;
+
+    private final INetworkConfigFactory networkConfig;
+
+    public ElasticsearchSink(INetworkConfigFactory networkConfig) {
+        this.networkConfig = networkConfig;
+    }
 
     @Override
     public void open(Configuration parameters) throws Exception {
-        logger.debug("open");
+        this.esClient = this.networkConfig.create();
+        LOG.debug("open");
     }
 
     @Override
     public void invoke(T value, Context context) throws Exception {
-        logger.debug("invoke");
+        LOG.debug("invoke");
     }
 
     @Override
     public void snapshotState(FunctionSnapshotContext functionSnapshotContext) throws Exception {
-        logger.debug("snapshotState");
+        LOG.debug("snapshotState");
     }
 
     @Override
     public void initializeState(FunctionInitializationContext functionInitializationContext) throws Exception {
-        logger.debug("initializeState");
+        LOG.debug("initializeState");
     }
 
     @Override
     public void close() throws Exception {
-        logger.debug("close");
+        LOG.debug("close");
     }
 }
