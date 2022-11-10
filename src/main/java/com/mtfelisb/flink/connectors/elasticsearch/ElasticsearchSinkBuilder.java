@@ -33,37 +33,105 @@ public class ElasticsearchSinkBuilder<T> {
 
     private String password;
 
-    public ElasticsearchSinkBuilder<T> withHost(String host) {
+    private int threshold;
+
+    private Emitter<T> emitter;
+
+    /**
+     * setHost
+     * set the host where the Elasticsearch cluster is reachable
+     *
+     * @param host the host address
+     * @return this builder
+     */
+    public ElasticsearchSinkBuilder<T> setHost(String host) {
         checkNotNull(host);
         checkState(host.length() > 0, "Host cannot be empty");
         this.host = host;
         return this;
     }
 
-    public ElasticsearchSinkBuilder<T> withPort(int port) {
+    /**
+     * setPort
+     * set the port where the Elasticsearch cluster is reachable
+     *
+     * @param port the port number
+     * @return
+     */
+    public ElasticsearchSinkBuilder<T> setPort(int port) {
         checkNotNull(port);
         checkState(host.length() > 0, "Port cannot be empty");
         this.port = port;
         return this;
     }
 
-    public ElasticsearchSinkBuilder<T> withUsername(String username) {
+    /**
+     * setUsername
+     * set the username to authenticate the connection with the Elasticsearch cluster
+     *
+     * @param username the auth username
+     * @return
+     */
+    public ElasticsearchSinkBuilder<T> setUsername(String username) {
         checkNotNull(username);
         this.username = username;
         return this;
     }
 
-    public ElasticsearchSinkBuilder<T> withPassword(String password) {
+    /**
+     * setPassword
+     * set the password to authenticate the connection with the Elasticsearch cluster
+     *
+     * @param password the auth password
+     * @return
+     */
+    public ElasticsearchSinkBuilder<T> setPassword(String password) {
         checkNotNull(password);
         this.password = password;
         return this;
     }
 
+    /**
+     * setThreshold
+     * set the threshold of the internal buffer
+     *
+     * @param threshold number of items to be buffered
+     * @return
+     */
+    public ElasticsearchSinkBuilder<T> setThreshold(int threshold) {
+        checkNotNull(threshold);
+        checkState(threshold > 0, "Threshold cannot be negative");
+        this.threshold = threshold;
+        return this;
+    }
+
+    /**
+     * setEmitter
+     * set the emitter that will be called at every stream element to be processed and buffered
+     *
+     * @param emitter emitter operation
+     * @return
+     */
+    public ElasticsearchSinkBuilder<T> setEmitter(Emitter<T> emitter) {
+        checkNotNull(emitter);
+        this.emitter = emitter;
+        return this;
+    }
+
+    /**
+     * build
+     * the Elasticsearch sink
+     *
+     * @return the {ElasticsearchSink} instance
+     */
     public ElasticsearchSink<T> build() {
         validate();
 
         return new ElasticsearchSink<T>(
-            new NetworkConfigFactory(host, port, username, password)
+            new NetworkConfigFactory(host, port, username, password),
+            emitter,
+            threshold,
+            new BulkRequestFactory()
         );
     }
 
