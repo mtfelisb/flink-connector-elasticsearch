@@ -19,7 +19,9 @@
  *
  */
 
-package com.mtfelisb.flink.connectors.elasticsearch;
+package com.mtfelisb.flink.connectors.elasticsearch.sink;
+
+import java.io.IOException;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.apache.flink.util.Preconditions.checkState;
@@ -33,7 +35,7 @@ public class ElasticsearchSinkBuilder<T> {
 
     private String password;
 
-    private int threshold;
+    private Long threshold;
 
     private Emitter<T> emitter;
 
@@ -98,7 +100,7 @@ public class ElasticsearchSinkBuilder<T> {
      * @param threshold number of items to be buffered
      * @return
      */
-    public ElasticsearchSinkBuilder<T> setThreshold(int threshold) {
+    public ElasticsearchSinkBuilder<T> setThreshold(Long threshold) {
         checkNotNull(threshold);
         checkState(threshold > 0, "Threshold cannot be negative");
         this.threshold = threshold;
@@ -124,7 +126,7 @@ public class ElasticsearchSinkBuilder<T> {
      *
      * @return the {ElasticsearchSink} instance
      */
-    public ElasticsearchSink<T> build() {
+    public ElasticsearchSink<T> build() throws IOException {
         validate();
 
         return new ElasticsearchSink<T>(

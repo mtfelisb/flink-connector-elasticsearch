@@ -19,7 +19,7 @@
  *
  */
 
-package com.mtfelisb.flink.connectors.elasticsearch;
+package com.mtfelisb.flink.connectors.elasticsearch.sink;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;

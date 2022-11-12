@@ -19,12 +19,12 @@
  *
  */
 
-package com.mtfelisb.flink.connectors.elasticsearch;
+package com.mtfelisb.flink.connectors.elasticsearch.sink;
 
-import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 
 import java.io.Serializable;
 
-public interface IBulkRequestFactory extends Serializable {
-    BulkRequest.Builder create();
+public interface Emitter<T> extends Serializable {
+    BulkOperation.Builder emit(T value, BulkOperation.Builder op);
 }

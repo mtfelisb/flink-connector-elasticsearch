@@ -20,7 +20,7 @@
  *
  */
 
-package com.mtfelisb.flink.connectors.elasticsearch;
+package com.mtfelisb.flink.connectors.elasticsearch.sink;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
@@ -46,7 +46,7 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
      * used to send requests to the Elasticsearch cluster
      *
      */
-    private ElasticsearchClient esClient;
+    private transient ElasticsearchClient esClient;
 
     /**
      * network config factory
@@ -55,7 +55,7 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
      */
     private final INetworkConfigFactory networkConfig;
 
-    private BulkRequest.Builder bulkRequest;
+    private transient BulkRequest.Builder bulkRequest;
 
     /**
      * bulk request builder
@@ -75,7 +75,7 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
      * user defined bulk size
      *
      */
-    private final int threshold;
+    private final Long threshold;
 
     /**
      * user defined operations to be bulked
@@ -91,7 +91,7 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
      * @param emitter user defined operations to be sent in bulk requests
      * @param threshold used defined limiting the bulk request size
      */
-    public ElasticsearchSink(INetworkConfigFactory networkConfig, Emitter<T> emitter, int threshold, IBulkRequestFactory bulkRequestFactory) {
+    public ElasticsearchSink(final INetworkConfigFactory networkConfig, Emitter<T> emitter, Long threshold, IBulkRequestFactory bulkRequestFactory) throws IOException {
         this.networkConfig = networkConfig;
         this.emitter = emitter;
         this.threshold = threshold;
@@ -107,9 +107,9 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
      * @throws Exception
      */
     @Override
-    public void open(Configuration parameters) {
-        this.esClient = this.networkConfig.create();
+    public void open(Configuration parameters) throws Exception {
         this.bulkRequest = bulkRequestFactory.create();
+        this.esClient = networkConfig.create();
     }
 
     /**
@@ -137,6 +137,7 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
      * @throws IOException
      */
     private void flush() throws IOException {
+        System.out.println("flush");
         if (thresholdCounter.get() == 0) return;
         BulkResponse result = esClient.bulk(bulkRequest.build());
 
