@@ -34,6 +34,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.RestClient;
 
+import static org.apache.flink.shaded.curator5.com.google.common.base.Preconditions.checkNotNull;
+
+/**
+ * NetworkConfigFactory
+ *
+ * A factory that implements the INetworkConfigFactory interface
+ * to create valid ElasticsearchClient instances
+ */
 public class NetworkConfigFactory implements INetworkConfigFactory {
     private final static Logger LOG = LogManager.getLogger(NetworkConfigFactory.class);
 
@@ -46,8 +54,8 @@ public class NetworkConfigFactory implements INetworkConfigFactory {
     private final String password;
 
     public NetworkConfigFactory(String host, int port, String username, String password) {
-        this.host = host;
-        this.port = port;
+        this.host = checkNotNull(host);
+        this.port = checkNotNull(port);
         this.username = username;
         this.password = password;
     }
