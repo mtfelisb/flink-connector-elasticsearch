@@ -38,6 +38,17 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * ElasticsearchSink
+ *
+ * A RichSinkFunction with CheckpointedFunction implemented;
+ *
+ * The ElasticsearchSink uses BulkRequest internally to each incoming event
+ * and flushes if a specified threshold is reached, or if the checkpoint is
+ * enabled, when the snapshot is triggered.
+ *
+ * @param <T>
+ */
 public class ElasticsearchSink<T> extends RichSinkFunction<T> implements CheckpointedFunction {
     private final static Logger LOG = LogManager.getLogger(ElasticsearchSink.class);
 
@@ -53,13 +64,20 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
      * used to create connections with Elasticsearch cluster
      *
      */
-    private final INetworkConfigFactory networkConfig;
+    private final INetworkConfigFactory networkConfigFactory;
 
+    /**
+     * bulk request builder
+     * used to push every input element before sending
+     * them to the Elasticsearch cluster
+     *
+     */
     private transient BulkRequest.Builder bulkRequest;
 
     /**
      * bulk request builder
-     * recreated on every flushing
+     * responsible to recreate bulk objects after they
+     * got flushed
      *
      */
     private final IBulkRequestFactory bulkRequestFactory;
@@ -78,8 +96,8 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
     private final Long threshold;
 
     /**
-     * user defined operations to be bulked
-     * emitted on every single stream item
+     * user defined operations to be bulked;
+     * emitted on every single stream input
      *
      */
     private final Emitter<T> emitter;
@@ -87,12 +105,17 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
     /**
      * ElasticsearchSink
      *
-     * @param networkConfig a factory to create the network conn with Elasticsearch
+     * @param networkConfigFactory a factory to create the network conn with Elasticsearch
      * @param emitter user defined operations to be sent in bulk requests
      * @param threshold used defined limiting the bulk request size
+     *
      */
-    public ElasticsearchSink(final INetworkConfigFactory networkConfig, Emitter<T> emitter, Long threshold, IBulkRequestFactory bulkRequestFactory) throws IOException {
-        this.networkConfig = networkConfig;
+    public ElasticsearchSink(
+            final INetworkConfigFactory networkConfigFactory,
+            final Emitter<T> emitter,
+            final Long threshold,
+            final IBulkRequestFactory bulkRequestFactory) {
+        this.networkConfigFactory = networkConfigFactory;
         this.emitter = emitter;
         this.threshold = threshold;
         this.bulkRequestFactory = bulkRequestFactory;
@@ -109,7 +132,7 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
     @Override
     public void open(Configuration parameters) throws Exception {
         this.bulkRequest = bulkRequestFactory.create();
-        this.esClient = networkConfig.create();
+        this.esClient = networkConfigFactory.create();
     }
 
     /**
@@ -123,7 +146,7 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
     @Override
     public void invoke(T value, Context context) throws Exception {
         thresholdCounter.getAndAdd(1);
-        bulkRequest.operations(op -> this.emitter.emit(value, op));
+        bulkRequest.operations(op -> this.emitter.emit(value, op, context));
 
         if (thresholdCounter.get() == threshold) {
             flush();
@@ -132,16 +155,16 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
 
     /**
      * flush
-     * flushes the buffered data sending requests to Elasticsearch in bulks;
+     * flushes the buffered data sending requests to the
+     * Elasticsearch cluster in bulks;
      *
      * @throws IOException
      */
     private void flush() throws IOException {
-        System.out.println("flush");
         if (thresholdCounter.get() == 0) return;
         BulkResponse result = esClient.bulk(bulkRequest.build());
 
-        // Log errors, if any
+        // @TODO improve error handling; implement a retry mechanism
         if (result.errors()) {
             LOG.error("Bulk had errors");
             for (BulkResponseItem item: result.items()) {
@@ -153,6 +176,7 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
 
         bulkRequest = this.bulkRequestFactory.create();
         thresholdCounter.set(0);
+
         LOG.debug("Ingestion took {}ms of {} items", result.took(), result.items().size());
     }
 
@@ -180,10 +204,13 @@ public class ElasticsearchSink<T> extends RichSinkFunction<T> implements Checkpo
 
     /**
      * close
+     * the close method when triggered by Flink will
+     * destroy the ElasticsearchClient connection
+     *
      * @throws Exception
      */
     @Override
     public void close() throws Exception {
-        //
+        esClient.shutdown();
     }
 }
