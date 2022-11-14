@@ -30,51 +30,19 @@ import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.http.HttpHost;
 
 import org.junit.Assert;
-import org.junit.ClassRule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.util.Random;
 
 @Testcontainers
-public class ElasticsearchSinkTest {
-    public static final String ELASTICSEARCH_VERSION = "8.5.0";
-
-    public static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
-            .parse("docker.elastic.co/elasticsearch/elasticsearch")
-            .withTag(ELASTICSEARCH_VERSION);
-
-    @ClassRule
-    public static MiniClusterWithClientResource flinkCluster =
-        new MiniClusterWithClientResource(
-            new MiniClusterResourceConfiguration.Builder()
-                .setNumberSlotsPerTaskManager(2)
-                .setNumberTaskManagers(1)
-                .build());
-
-    @Container
-    private static final ElasticsearchContainer ES_CONTAINER = createElasticsearchContainer();
-
-    public static ElasticsearchContainer createElasticsearchContainer() {
-        return new ElasticsearchContainer(ELASTICSEARCH_IMAGE)
-            .withEnv("xpack.security.enabled", "false");
-    }
-
-    public RestClient client;
-
-    public ElasticsearchClient esClient;
-
+public class ElasticsearchSinkTest extends ElasticsearchSinkBaseITCase {
     @BeforeEach
     void setUp() {
         this.client = RestClient.builder(HttpHost.create(ES_CONTAINER.getHttpHostAddress())).build();
@@ -91,7 +59,7 @@ public class ElasticsearchSinkTest {
         final ElasticsearchSink<DummyData> sink = ElasticsearchSinkBuilder.<DummyData>builder()
             .setThreshold(2L)
             .setEmitter(
-                (value, op) ->
+                (value, op, ctx) ->
                     (BulkOperation.Builder) op.update(up -> up.id(value.getId()).index(INDEX_NAME).action(ac -> ac.doc(value).docAsUpsert(true)))
             )
             .setHost(ES_CONTAINER.getHost())
@@ -120,7 +88,7 @@ public class ElasticsearchSinkTest {
         final ElasticsearchSink<DummyData> sink = ElasticsearchSinkBuilder.<DummyData>builder()
             .setThreshold(1000L)
             .setEmitter(
-                (value, op) ->
+                (value, op, ctx) ->
                     (BulkOperation.Builder) op.index(i -> i.id(value.getId()).document(value).index(INDEX_NAME))
             )
             .setHost(ES_CONTAINER.getHost())
