@@ -26,17 +26,47 @@ import java.io.IOException;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.apache.flink.util.Preconditions.checkState;
 
+/**
+ * The builder responsible to create valid ElasticsearchSink
+ * instances
+ *
+ * @param <T>
+ */
 public class ElasticsearchSinkBuilder<T> {
+    /**
+     * The host where the Elasticsearch cluster is reachable
+     *
+     */
     private String host;
 
+    /**
+     * The port where the Elasticsearch cluster is reachable
+     *
+     */
     private int port;
 
+    /**
+     * The username to authenticate the connection with the Elasticsearch cluster
+     *
+     */
     private String username;
 
+    /**
+     * The password to authenticate the connection with the Elasticsearch cluster
+     *
+     */
     private String password;
 
+    /**
+     * The threshold of the internal buffer
+     *
+     */
     private Long threshold;
 
+    /**
+     * The emitter that will be called on every stream element to be processed and buffered
+     *
+     */
     private Emitter<T> emitter;
 
     /**
@@ -61,8 +91,7 @@ public class ElasticsearchSinkBuilder<T> {
      * @return
      */
     public ElasticsearchSinkBuilder<T> setPort(int port) {
-        checkNotNull(port);
-        checkState(host.length() > 0, "Port cannot be empty");
+        // no need to checkNotNull() here since int can't be null
         this.port = port;
         return this;
     }
@@ -102,7 +131,7 @@ public class ElasticsearchSinkBuilder<T> {
      */
     public ElasticsearchSinkBuilder<T> setThreshold(Long threshold) {
         checkNotNull(threshold);
-        checkState(threshold > 0, "Threshold cannot be negative");
+        checkState(threshold >= 0, "Threshold should be positive");
         this.threshold = threshold;
         return this;
     }
@@ -126,7 +155,7 @@ public class ElasticsearchSinkBuilder<T> {
      *
      * @return the {ElasticsearchSink} instance
      */
-    public ElasticsearchSink<T> build() throws IOException {
+    public ElasticsearchSink<T> build() {
         validate();
 
         return new ElasticsearchSink<T>(
@@ -141,7 +170,10 @@ public class ElasticsearchSinkBuilder<T> {
         return new ElasticsearchSinkBuilder<>();
     }
 
-    private static void validate() {
-        //
+    private void validate() {
+        this.setEmitter(this.emitter);
+        this.setHost(this.host);
+        this.setPort(this.port);
+        this.setThreshold(this.threshold);
     }
 }
