@@ -22,9 +22,10 @@
 package com.mtfelisb.flink.connectors.elasticsearch.sink;
 
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 
 import java.io.Serializable;
 
 public interface Emitter<T> extends Serializable {
-    BulkOperation.Builder emit(T value, BulkOperation.Builder op);
+    BulkOperation.Builder emit(T value, BulkOperation.Builder op, SinkFunction.Context ctx);
 }
