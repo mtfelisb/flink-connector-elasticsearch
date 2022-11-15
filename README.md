@@ -4,7 +4,7 @@ Apache Flink connector to Elasticsearch v8
 ![Publish](https://github.com/mtfelisb/flink-connector-elasticsearch/workflows/Publish/badge.svg)
 ![CI](https://github.com/mtfelisb/flink-connector-elasticsearch/workflows/CI/badge.svg)
 
-## The whay & why
+## The what & why
 This project aims to fill the gap between Apache Flink and Elasticsearch version 8. Officially, the Flink project has connectors to Elasticsearch version 6 and 7, and they share the same base. However, the latest version of Elasticsearch count on a brand new Java API Client, instead of the now deprecated RestHighLevelClient. That's the main reason to create this connector from scratch.
 
 Similarly to the previous versions, internally each parallel instance uses a buffer to send requests to the Elasticsearch cluster in bulk. The buffer can be flushed by the threshold or enabling the checkpointing.
