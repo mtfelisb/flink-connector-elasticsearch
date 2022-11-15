@@ -58,10 +58,22 @@ final ElasticsearchSink<T> esSink = ElasticsearchSinkBuilder.<T>builder()
   env.execute();
 ```
 
+
 ## Delivery Guarantee
 The `flink-connector-elasticsearch` is integrated with Flink's checkpointing mechanism, meaning that it will flush all buffered data into the Elasticsearch cluster when the checkpoint is triggered automatically. Hence, `flink-connector-elasticsearch` holds `AT_LEAST_ONCE` guarantee when the checkpoint is enabled.
 
 **Important:** The `EXACTLY_ONCE` guarantee can also be achieved if the update operation holds deterministic ids and the upsert is flagged true.
+
+## Sink options
+
+| Name          | Type          | Required      | Description   |
+| ------------- | ------------- | ------------- | ------------- |
+| threshold     | Long          | Yes           | The internal buffer limit to send requests |
+| host          | String        | Yes           | The host to reach the Elasticsearch cluster |
+| port          | int           | Yes           | The port to reach the Elasticsearch cluster |
+| emitter       | Emitter<>     | Yes           | The Emitter implementation to process each element before pushing to the buffer |
+| username      | String        | No            | The username to authenticate in the Elasticsearch cluster |
+| password      | String        | No            | The password to authenticate in the Elasticsearch cluster |
 
 ## Changelog
 - Initial release
