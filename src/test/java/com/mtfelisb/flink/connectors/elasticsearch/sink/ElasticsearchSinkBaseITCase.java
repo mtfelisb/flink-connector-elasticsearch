@@ -24,12 +24,20 @@ package com.mtfelisb.flink.connectors.elasticsearch.sink;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
+import org.apache.http.util.EntityUtils;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import org.junit.ClassRule;
+
+import java.io.IOException;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.Assert.assertEquals;
 
 @Testcontainers
 public class ElasticsearchSinkBaseITCase {
@@ -68,4 +76,16 @@ public class ElasticsearchSinkBaseITCase {
                 .setNumberTaskManagers(1)
                 .build()
         );
+
+    public void assertIdsAreWritten(String index, String[] ids) throws IOException {
+        client.performRequest(new Request("GET", "_refresh"));
+        Response response = client.performRequest(new Request("GET", index + "/_search/"));
+        String responseEntity = EntityUtils.toString(response.getEntity());
+
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+        for (String id : ids) {
+            assertThat(responseEntity).contains(id);
+        }
+    }
 }

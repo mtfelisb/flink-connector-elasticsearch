@@ -25,21 +25,16 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.http.HttpHost;
 
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import java.util.Random;
 
 @Testcontainers
 public class ElasticsearchSinkTest extends ElasticsearchSinkBaseITCase {
@@ -49,68 +44,91 @@ public class ElasticsearchSinkTest extends ElasticsearchSinkBaseITCase {
         this.esClient = new ElasticsearchClient(new RestClientTransport(RestClient.builder(HttpHost.create(ES_CONTAINER.getHttpHostAddress())).build(), new JacksonJsonpMapper()));
     }
 
+    /**
+     * indexingByThresholdReached
+     * It's expected to sink data when the threshold specified is reached
+     *
+     * @throws Exception
+     */
     @Test
     public void indexingByThresholdReached() throws Exception {
-        String INDEX_NAME = "threshold-reached";
+        String ELASTICSEARCH_INDEX_NAME = "threshold-reached";
 
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1);
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment
+            .getExecutionEnvironment()
+            .setParallelism(1);
 
         final ElasticsearchSink<DummyData> sink = ElasticsearchSinkBuilder.<DummyData>builder()
             .setThreshold(2L)
-            .setEmitter(
-                (value, op, ctx) ->
-                    (BulkOperation.Builder) op.update(up -> up.id(value.getId()).index(INDEX_NAME).action(ac -> ac.doc(value).docAsUpsert(true)))
-            )
             .setHost(ES_CONTAINER.getHost())
             .setPort(ES_CONTAINER.getFirstMappedPort())
+            .setEmitter(
+                (value, op, ctx) ->
+                    (BulkOperation.Builder) op
+                        .update(up -> up
+                            .id(value.getId())
+                            .index(ELASTICSEARCH_INDEX_NAME)
+                            .action(ac -> ac
+                                .doc(value)
+                                .docAsUpsert(true)
+                            )
+                        )
+            )
             .build();
 
         env
             .fromElements("first", "second", "third")
-            .map((MapFunction<String, DummyData>) value -> new DummyData(new Random().nextLong() + "_v1", value))
+            .map((MapFunction<String, DummyData>) value -> new DummyData(value + "_v1_index", value))
             .addSink(sink);
 
         env.execute();
 
-        client.performRequest(new Request("GET", "_refresh"));
-        Response response = client.performRequest(new Request("GET", INDEX_NAME + "/_search/"));
-        Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+        assertIdsAreWritten(ELASTICSEARCH_INDEX_NAME, new String[]{"first_v1_index", "second_v1_index"});
     }
 
+    /**
+     * indexingByCheckpoint
+     * It's expected to sink data when the checkpoint is triggered
+     *
+     * @throws Exception
+     */
     @Test
     public void indexingByCheckpoint() throws Exception {
-        String INDEX_NAME = "checkpoint-triggered";
+        String ELASTICSEARCH_INDEX_NAME = "checkpoint-triggered";
 
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.enableCheckpointing(10);
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment
+            .getExecutionEnvironment()
+            .enableCheckpointing(500);
 
         final ElasticsearchSink<DummyData> sink = ElasticsearchSinkBuilder.<DummyData>builder()
             .setThreshold(1000L)
-            .setEmitter(
-                (value, op, ctx) ->
-                    (BulkOperation.Builder) op.index(i -> i.id(value.getId()).document(value).index(INDEX_NAME))
-            )
             .setHost(ES_CONTAINER.getHost())
             .setPort(ES_CONTAINER.getFirstMappedPort())
+            .setEmitter(
+                (value, op, ctx) ->
+                    (BulkOperation.Builder) op
+                        .index(i -> i
+                            .id(value.getId())
+                            .document(value)
+                            .index(ELASTICSEARCH_INDEX_NAME)
+                        )
+            )
             .build();
 
         env
             .fromElements("first", "second")
-            .map((MapFunction<String, DummyData>) value -> new DummyData(new Random().nextLong() + "_v1", value))
+            .map((MapFunction<String, DummyData>) value -> new DummyData(value + "_v1_index", value))
             .addSink(sink);
 
         env.execute();
 
-        client.performRequest(new Request("GET", "_refresh"));
-        Response response = client.performRequest(new Request("GET", INDEX_NAME + "/_search/"));
-        Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+        assertIdsAreWritten(ELASTICSEARCH_INDEX_NAME, new String[]{"first_v1_index", "second_v1_index"});
     }
 
     public static class DummyData {
-        private String id;
+        private final String id;
 
-        private String name;
+        private final String name;
 
         public DummyData(String id, String name) {
             this.id = id;
