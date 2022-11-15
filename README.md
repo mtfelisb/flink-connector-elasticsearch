@@ -4,8 +4,10 @@ Apache Flink connector to Elasticsearch v8
 ![Publish](https://github.com/mtfelisb/flink-connector-elasticsearch/workflows/Publish/badge.svg)
 ![CI](https://github.com/mtfelisb/flink-connector-elasticsearch/workflows/CI/badge.svg)
 
-## The connector
+## The whay & why
 This project aims to fill the gap between Apache Flink and Elasticsearch version 8. Officially, the Flink project has connectors to Elasticsearch version 6 and 7, and they share the same base. However, the latest version of Elasticsearch count on a brand new Java API Client, instead of the now deprecated RestHighLevelClient. That's the main reason to create this connector from scratch.
+
+Similarly to the previous versions, internally each parallel instance uses a buffer to send requests to the Elasticsearch cluster in bulk. The buffer can be flushed by the threshold or enabling the checkpointing.
 
 ## Getting started
 
@@ -34,10 +36,12 @@ implementation com.mtfelisb:flink-connector-elasticsearch:1.0.0
 ## Example
 
 ```java
-DataStream<DummyData> stream = ...
+DataStream<T> stream = ...
 
 final ElasticsearchSink<DummyData> esSink = ElasticsearchSinkBuilder.<DummyData>builder()
-    .setThreshold(2L)
+    .setThreshold(100L)
+    .setHost("localhost")
+    .setPort(9200)
     .setEmitter(
         (element, operation, context) ->
             (BulkOperation.Builder) operation
@@ -47,8 +51,6 @@ final ElasticsearchSink<DummyData> esSink = ElasticsearchSinkBuilder.<DummyData>
                 .action(ac -> ac.doc(element.getValue()))
               )
     )
-    .setHost(ES_CONTAINER.getHost())
-    .setPort(ES_CONTAINER.getFirstMappedPort())
     .build();
     
   stream.addSink(esSink);
