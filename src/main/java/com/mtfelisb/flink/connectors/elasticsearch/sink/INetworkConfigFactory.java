@@ -21,10 +21,13 @@
 
 package com.mtfelisb.flink.connectors.elasticsearch.sink;
 
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 
 import java.io.Serializable;
 
 public interface INetworkConfigFactory extends Serializable {
     ElasticsearchClient create();
+
+    ElasticsearchAsyncClient createAsync();
 }

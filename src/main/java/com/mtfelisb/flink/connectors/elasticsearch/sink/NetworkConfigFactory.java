@@ -21,18 +21,22 @@
 
 package com.mtfelisb.flink.connectors.elasticsearch.sink;
 
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 
+import com.mtfelisb.flink.connectors.elasticsearch.sink.v2.ElasticsearchWriter;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
 
 import static org.apache.flink.shaded.curator5.com.google.common.base.Preconditions.checkNotNull;
 
@@ -43,11 +47,13 @@ import static org.apache.flink.shaded.curator5.com.google.common.base.Preconditi
  * to create valid ElasticsearchClient instances
  */
 public class NetworkConfigFactory implements INetworkConfigFactory {
-    private final static Logger LOG = LogManager.getLogger(NetworkConfigFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NetworkConfigFactory.class);
 
-    private final String host;
+    private String host;
 
-    private final int port;
+    private int port;
+
+    private HttpHost[] hosts;
 
     private final String username;
 
@@ -60,20 +66,42 @@ public class NetworkConfigFactory implements INetworkConfigFactory {
         this.password = password;
     }
 
+    public NetworkConfigFactory(HttpHost[] hosts, String username, String password) {
+        this.hosts = checkNotNull(hosts);
+        this.username = username;
+        this.password = password;
+    }
+
     @Override
     public ElasticsearchClient create() {
         LOG.debug("Http client host {} and port {}", host, port);
+        return new ElasticsearchClient(
+            new RestClientTransport(this.getRestClient(), new JacksonJsonpMapper()));
+    }
 
-        // Create the low-level client
-        RestClient restClient = RestClient.builder(new HttpHost(host, port))
+    @Override
+    public ElasticsearchAsyncClient createAsync() {
+        LOG.debug("Http client host {} and port {}", host, port);
+        return new ElasticsearchAsyncClient(
+            new RestClientTransport(this.getRestClient(), new JacksonJsonpMapper()));
+    }
+
+    private RestClient getRestClient() {
+        if (host != null) {
+            return RestClient.builder(new HttpHost(host, port))
+                .setHttpClientConfigCallback(httpClientBuilder ->
+                    (username != null && password != null) ?
+                        httpClientBuilder.setDefaultCredentialsProvider(getCredentials())
+                        : httpClientBuilder
+                ).build();
+        }
+
+        return RestClient.builder(hosts)
             .setHttpClientConfigCallback(httpClientBuilder ->
                 (username != null && password != null) ?
                     httpClientBuilder.setDefaultCredentialsProvider(getCredentials())
                     : httpClientBuilder
-                ).build();
-
-        // And create the API client
-        return new ElasticsearchClient(new RestClientTransport(restClient, new JacksonJsonpMapper()));
+            ).build();
     }
 
     private CredentialsProvider getCredentials() {
