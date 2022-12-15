@@ -21,9 +21,9 @@
 
 package com.mtfelisb.flink.connectors.elasticsearch.sink.v2;
 
-import co.elastic.clients.elasticsearch.core.bulk.BulkOperationVariant;
 import org.apache.flink.connector.base.sink.writer.ElementConverter;
 
 import java.io.Serializable;
 
-public interface ElasticsearchSinkElementConverter<InputT, OperationT> extends ElementConverter<InputT, OperationT>, Serializable {}
+public interface ElasticsearchSinkElementConverter<InputT, OperationT>
+    extends ElementConverter<InputT, OperationT>, Serializable {}

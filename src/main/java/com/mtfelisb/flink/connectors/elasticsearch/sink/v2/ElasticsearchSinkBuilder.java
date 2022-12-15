@@ -22,7 +22,6 @@
 package com.mtfelisb.flink.connectors.elasticsearch.sink.v2;
 
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperationVariant;
-import com.esotericsoftware.kryo.io.Input;
 import org.apache.flink.api.connector.sink2.SinkWriter;
 import org.apache.flink.connector.base.sink.AsyncSinkBaseBuilder;
 import org.apache.flink.connector.base.sink.writer.ElementConverter;
@@ -147,7 +146,7 @@ public class ElasticsearchSinkBuilder<InputT>
         );
     }
 
-    private static class ElementConverterOperation<T> implements ElementConverter<T, Operation> {
+    public static class ElementConverterOperation<T> implements ElementConverter<T, Operation> {
         private final ElasticsearchSinkElementConverter<T, BulkOperationVariant> converter;
 
         public ElementConverterOperation(ElasticsearchSinkElementConverter<T, BulkOperationVariant> converter) {
