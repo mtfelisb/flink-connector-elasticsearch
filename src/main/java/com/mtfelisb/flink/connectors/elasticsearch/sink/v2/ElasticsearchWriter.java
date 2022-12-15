@@ -24,19 +24,15 @@ package com.mtfelisb.flink.connectors.elasticsearch.sink.v2;
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtfelisb.flink.connectors.elasticsearch.sink.NetworkConfigFactory;
 import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.connector.base.sink.writer.AsyncSinkWriter;
+import org.apache.flink.connector.base.sink.writer.BufferedRequestState;
 import org.apache.flink.connector.base.sink.writer.ElementConverter;
 import org.apache.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -47,17 +43,18 @@ public class ElasticsearchWriter<InputT> extends AsyncSinkWriter<InputT, Operati
     private final ElasticsearchAsyncClient esClient;
 
     public ElasticsearchWriter(
-        ElementConverter<InputT, Operation> elementConverter,
-        Sink.InitContext context,
-        int maxBatchSize,
-        int maxInFlightRequests,
-        int maxBufferedRequests,
-        long maxBatchSizeInBytes,
-        long maxTimeInBufferMS,
-        long maxRecordSizeInBytes,
-        String username,
-        String password,
-        HttpHost[] httpHosts
+            ElementConverter<InputT, Operation> elementConverter,
+            Sink.InitContext context,
+            int maxBatchSize,
+            int maxInFlightRequests,
+            int maxBufferedRequests,
+            long maxBatchSizeInBytes,
+            long maxTimeInBufferMS,
+            long maxRecordSizeInBytes,
+            String username,
+            String password,
+            HttpHost[] httpHosts,
+            Collection<BufferedRequestState<Operation>> state
     ) {
         super(
             elementConverter,
@@ -67,15 +64,16 @@ public class ElasticsearchWriter<InputT> extends AsyncSinkWriter<InputT, Operati
             maxBufferedRequests,
             maxBatchSizeInBytes,
             maxTimeInBufferMS,
-            maxRecordSizeInBytes
+            maxRecordSizeInBytes,
+            state
         );
-        LOG.info("creating writer");
+
         this.esClient = new NetworkConfigFactory(httpHosts, username, password).createAsync();
     }
 
     @Override
     protected void submitRequestEntries(List<Operation> requestEntries, Consumer<List<Operation>> requestResult) {
-        LOG.info("submitRequestEntries {} items", requestEntries.size());
+        LOG.info("submitRequestEntries with {} items", requestEntries.size());
 
         BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
@@ -104,9 +102,9 @@ public class ElasticsearchWriter<InputT> extends AsyncSinkWriter<InputT, Operati
 
                     requestResult.accept(Collections.emptyList());
 
-                // The whole batch were written successfully
+                // The whole batch was written successfully
                 } else {
-                    LOG.info("Bulk succeed {} items", requestEntries.size());
+                    LOG.info("Bulk succeed with {} items in {}", requestEntries.size(), response.took());
                     requestResult.accept(Collections.emptyList());
                 }
             });
@@ -114,7 +112,7 @@ public class ElasticsearchWriter<InputT> extends AsyncSinkWriter<InputT, Operati
 
     @Override
     protected long getSizeInBytes(Operation requestEntry) {
-        return requestEntry.toString().getBytes().length;
+        return new OperationSerializer().size(requestEntry);
     }
 }
 
