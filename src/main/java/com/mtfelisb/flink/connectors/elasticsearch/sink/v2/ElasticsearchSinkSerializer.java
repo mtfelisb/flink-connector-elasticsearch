@@ -21,30 +21,20 @@
 
 package com.mtfelisb.flink.connectors.elasticsearch.sink.v2;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.flink.connector.base.sink.writer.AsyncSinkWriterStateSerializer;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.*;
 
 public class ElasticsearchSinkSerializer extends AsyncSinkWriterStateSerializer<Operation> {
-    @Override
-    protected void serializeRequestToStream(Operation request, DataOutputStream out) throws IOException {
-        ObjectMapper mapper = new ObjectMapper()
-            .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
 
-        out.write(mapper.writeValueAsString(request).getBytes(StandardCharsets.UTF_8));
+    @Override
+    protected void serializeRequestToStream(Operation request, DataOutputStream out) {
+        new OperationSerializer().serialize(request, out);
     }
 
     @Override
-    protected Operation deserializeRequestFromStream(long requestSize, DataInputStream in) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(in.readAllBytes(), Operation.class);
+    protected Operation deserializeRequestFromStream(long requestSize, DataInputStream in) {
+        return new OperationSerializer().deserialize(requestSize, in);
     }
 
     @Override
