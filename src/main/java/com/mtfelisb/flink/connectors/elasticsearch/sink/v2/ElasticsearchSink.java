@@ -29,11 +29,12 @@ import org.apache.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 
 public class ElasticsearchSink<InputT> extends AsyncSinkBase<InputT, Operation> {
     private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchSink.class);
+
     private final String username;
 
     private final String password;
@@ -41,16 +42,16 @@ public class ElasticsearchSink<InputT> extends AsyncSinkBase<InputT, Operation> 
     private final HttpHost[] httpHosts;
 
     protected ElasticsearchSink(
-            ElementConverter<InputT, Operation> converter,
-            int maxBatchSize,
-            int maxInFlightRequests,
-            int maxBufferedRequests,
-            long maxBatchSizeInBytes,
-            long maxTimeInBufferMS,
-            long maxRecordSizeInByte,
-            String username,
-            String password,
-            HttpHost[] httpHosts
+        ElementConverter<InputT, Operation> converter,
+        int maxBatchSize,
+        int maxInFlightRequests,
+        int maxBufferedRequests,
+        long maxBatchSizeInBytes,
+        long maxTimeInBufferMS,
+        long maxRecordSizeInByte,
+        String username,
+        String password,
+        HttpHost[] httpHosts
     ) {
         super(
             converter,
@@ -71,7 +72,8 @@ public class ElasticsearchSink<InputT> extends AsyncSinkBase<InputT, Operation> 
     public StatefulSinkWriter<InputT, BufferedRequestState<Operation>> createWriter(
         InitContext context
     ) {
-        LOG.info("createWriter");
+        LOG.debug("creating writer");
+
         return new ElasticsearchWriter<>(
             getElementConverter(),
             context,
@@ -83,15 +85,32 @@ public class ElasticsearchSink<InputT> extends AsyncSinkBase<InputT, Operation> 
             getMaxRecordSizeInBytes(),
             username,
             password,
-            httpHosts
+            httpHosts,
+            Collections.emptyList()
         );
     }
 
     @Override
     public StatefulSinkWriter<InputT, BufferedRequestState<Operation>> restoreWriter(
         InitContext context,
-        Collection<BufferedRequestState<Operation>> recoveredState) {
-        return null;
+        Collection<BufferedRequestState<Operation>> recoveredState
+    ) {
+        LOG.debug("restoring writer with {} items", recoveredState.size());
+
+        return new ElasticsearchWriter<>(
+            getElementConverter(),
+            context,
+            getMaxBatchSize(),
+            getMaxInFlightRequests(),
+            getMaxBufferedRequests(),
+            getMaxBatchSizeInBytes(),
+            getMaxTimeInBufferMS(),
+            getMaxRecordSizeInBytes(),
+            username,
+            password,
+            httpHosts,
+            recoveredState
+        );
     }
 
     @Override
