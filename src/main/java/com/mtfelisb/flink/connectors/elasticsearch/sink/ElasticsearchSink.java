@@ -32,8 +32,8 @@ import org.apache.flink.runtime.state.FunctionSnapshotContext;
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @param <T>
  */
 public class ElasticsearchSink<T> extends RichSinkFunction<T> implements CheckpointedFunction {
-    private final static Logger LOG = LogManager.getLogger(ElasticsearchSink.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchSink.class);
 
     /**
      * elasticsearch client
