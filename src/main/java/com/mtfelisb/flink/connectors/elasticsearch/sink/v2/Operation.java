@@ -23,7 +23,9 @@ package com.mtfelisb.flink.connectors.elasticsearch.sink.v2;
 
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperationVariant;
-import java.io.Serializable;
+
+import java.io.*;
+import java.util.Objects;
 
 public class Operation implements Serializable {
     private final BulkOperation bulkOperation;
@@ -34,5 +36,24 @@ public class Operation implements Serializable {
 
     public BulkOperation getBulkOperation() {
         return bulkOperation;
+    }
+
+    @Override
+    public String toString() {
+        return "Operation{" +
+            "bulkOperation=" + bulkOperation._kind() + '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Operation operation = (Operation) o;
+        return Objects.equals(bulkOperation._kind(), operation.bulkOperation._kind());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(bulkOperation);
     }
 }
