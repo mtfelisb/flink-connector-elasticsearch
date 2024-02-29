@@ -21,6 +21,8 @@
 
 package com.mtfelisb.flink.connectors.elasticsearch.sink;
 
+import org.apache.http.HttpHost;
+
 import java.io.IOException;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
@@ -34,16 +36,10 @@ import static org.apache.flink.util.Preconditions.checkState;
  */
 public class ElasticsearchSinkBuilder<T> {
     /**
-     * The host where the Elasticsearch cluster is reachable
+     * The HttpHost where the Elasticsearch cluster is reachable
      *
      */
-    private String host;
-
-    /**
-     * The port where the Elasticsearch cluster is reachable
-     *
-     */
-    private int port;
+    private HttpHost httpHost;
 
     /**
      * The username to authenticate the connection with the Elasticsearch cluster
@@ -70,29 +66,15 @@ public class ElasticsearchSinkBuilder<T> {
     private Emitter<T> emitter;
 
     /**
-     * setHost
-     * set the host where the Elasticsearch cluster is reachable
+     * setHttpHost
+     * set the HttpHost where the Elasticsearch cluster is reachable
      *
-     * @param host the host address
+     * @param httpHost the host address
      * @return this builder
      */
-    public ElasticsearchSinkBuilder<T> setHost(String host) {
-        checkNotNull(host);
-        checkState(host.length() > 0, "Host cannot be empty");
-        this.host = host;
-        return this;
-    }
-
-    /**
-     * setPort
-     * set the port where the Elasticsearch cluster is reachable
-     *
-     * @param port the port number
-     * @return
-     */
-    public ElasticsearchSinkBuilder<T> setPort(int port) {
-        // no need to checkNotNull() here since int can't be null
-        this.port = port;
+    public ElasticsearchSinkBuilder<T> setHttpHost(HttpHost httpHost) {
+        checkNotNull(httpHost);
+        this.httpHost = httpHost;
         return this;
     }
 
@@ -159,7 +141,7 @@ public class ElasticsearchSinkBuilder<T> {
         validate();
 
         return new ElasticsearchSink<T>(
-            new NetworkConfigFactory(host, port, username, password),
+            new NetworkConfigFactory(httpHost, username, password),
             emitter,
             threshold,
             new BulkRequestFactory()
@@ -172,8 +154,7 @@ public class ElasticsearchSinkBuilder<T> {
 
     private void validate() {
         this.setEmitter(this.emitter);
-        this.setHost(this.host);
-        this.setPort(this.port);
+        this.setHttpHost(this.httpHost);
         this.setThreshold(this.threshold);
     }
 }

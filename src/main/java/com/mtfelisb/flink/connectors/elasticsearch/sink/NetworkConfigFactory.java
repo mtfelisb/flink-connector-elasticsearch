@@ -45,27 +45,24 @@ import static org.apache.flink.shaded.curator5.com.google.common.base.Preconditi
 public class NetworkConfigFactory implements INetworkConfigFactory {
     private final static Logger LOG = LogManager.getLogger(NetworkConfigFactory.class);
 
-    private final String host;
-
-    private final int port;
+    private final HttpHost httpHost;
 
     private final String username;
 
     private final String password;
 
-    public NetworkConfigFactory(String host, int port, String username, String password) {
-        this.host = checkNotNull(host);
-        this.port = checkNotNull(port);
+    public NetworkConfigFactory(HttpHost httpHost, String username, String password) {
+        this.httpHost = checkNotNull(httpHost);
         this.username = username;
         this.password = password;
     }
 
     @Override
     public ElasticsearchClient create() {
-        LOG.debug("Http client host {} and port {}", host, port);
+        LOG.debug("Http client hostname {}", httpHost.toHostString());
 
         // Create the low-level client
-        RestClient restClient = RestClient.builder(new HttpHost(host, port))
+        RestClient restClient = RestClient.builder(httpHost)
             .setHttpClientConfigCallback(httpClientBuilder ->
                 (username != null && password != null) ?
                     httpClientBuilder.setDefaultCredentialsProvider(getCredentials())
