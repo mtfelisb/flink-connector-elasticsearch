@@ -21,6 +21,7 @@
 
 package com.mtfelisb.flink.connectors.elasticsearch.sink;
 
+import org.apache.http.HttpHost;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -53,8 +54,7 @@ public class ElasticsearchSinkBuilderTest {
         Throwable exception = assertThrows(
             NullPointerException.class,
             () -> ElasticsearchSinkBuilder.<String>builder()
-                .setPort(9200)
-                .setHost("localhost")
+                .setHttpHost(new HttpHost("localhost", 9200))
                 .setPassword("password")
                 .setUsername("username")
                 .setEmitter(null)
@@ -66,7 +66,7 @@ public class ElasticsearchSinkBuilderTest {
     }
 
     /**
-     * The host should be declared to create
+     * The httpHost should be declared to create
      * a valid ElasticsearchSink instance
      *
      */
@@ -75,28 +75,11 @@ public class ElasticsearchSinkBuilderTest {
         Throwable exception = assertThrows(
             NullPointerException.class,
             () -> ElasticsearchSinkBuilder.<String>builder()
-                .setHost(null)
+                .setHttpHost(null)
                 .build()
         );
 
         assertEquals(null, exception.getMessage());
-    }
-
-    /**
-     * The host should be declared to create
-     * a valid ElasticsearchSink instance
-     *
-     */
-    @Test
-    public void sinkBuilderSetHostEmpty() {
-        Throwable exception = assertThrows(
-            IllegalStateException.class,
-            () -> ElasticsearchSinkBuilder.<String>builder()
-                .setHost("")
-                .build()
-        );
-
-        assertEquals("Host cannot be empty", exception.getMessage());
     }
 
     /**

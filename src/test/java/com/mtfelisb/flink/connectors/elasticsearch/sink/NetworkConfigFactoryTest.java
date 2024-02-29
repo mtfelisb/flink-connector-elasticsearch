@@ -22,6 +22,7 @@
 package com.mtfelisb.flink.connectors.elasticsearch.sink;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import org.apache.http.HttpHost;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
@@ -38,7 +39,7 @@ public class NetworkConfigFactoryTest extends ElasticsearchSinkBaseITCase {
     public void requiredHost() {
         Throwable exception = assertThrows(
             NullPointerException.class,
-            () -> new NetworkConfigFactory(null, 9200, "username", "password"));
+            () -> new NetworkConfigFactory(null, "username", "password"));
 
         assertEquals(null, exception.getMessage());
     }
@@ -52,8 +53,7 @@ public class NetworkConfigFactoryTest extends ElasticsearchSinkBaseITCase {
     @Test
     public void create() throws IOException {
         ElasticsearchClient esClient = new NetworkConfigFactory(
-            ES_CONTAINER.getHost(),
-            ES_CONTAINER.getFirstMappedPort(),
+            HttpHost.create(ES_CONTAINER.getHttpHostAddress()),
             null,
             null
         ).create();
@@ -70,8 +70,7 @@ public class NetworkConfigFactoryTest extends ElasticsearchSinkBaseITCase {
     @Test
     public void createWithUsernameAndPassword() throws IOException {
         ElasticsearchClient esClient = new NetworkConfigFactory(
-            ES_AUTH_CONTAINER.getHost(),
-            ES_AUTH_CONTAINER.getFirstMappedPort(),
+            HttpHost.create(ES_CONTAINER.getHttpHostAddress()),
             "elastic",
             "generic-pass"
         ).create();

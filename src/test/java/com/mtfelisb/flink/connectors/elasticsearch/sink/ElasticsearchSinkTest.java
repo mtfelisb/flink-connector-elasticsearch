@@ -60,8 +60,7 @@ public class ElasticsearchSinkTest extends ElasticsearchSinkBaseITCase {
 
         final ElasticsearchSink<DummyData> sink = ElasticsearchSinkBuilder.<DummyData>builder()
             .setThreshold(2L)
-            .setHost(ES_CONTAINER.getHost())
-            .setPort(ES_CONTAINER.getFirstMappedPort())
+            .setHttpHost(HttpHost.create(ES_CONTAINER.getHttpHostAddress()))
             .setEmitter(
                 (value, op, ctx) ->
                     (BulkOperation.Builder) op
@@ -102,8 +101,7 @@ public class ElasticsearchSinkTest extends ElasticsearchSinkBaseITCase {
 
         final ElasticsearchSink<DummyData> sink = ElasticsearchSinkBuilder.<DummyData>builder()
             .setThreshold(1000L)
-            .setHost(ES_CONTAINER.getHost())
-            .setPort(ES_CONTAINER.getFirstMappedPort())
+            .setHttpHost(HttpHost.create(ES_CONTAINER.getHttpHostAddress()))
             .setEmitter(
                 (value, op, ctx) ->
                     (BulkOperation.Builder) op
